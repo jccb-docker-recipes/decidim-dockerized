@@ -1,0 +1,6 @@
+ProxyPreserveHost on
+ProxyRequests off
+ProxyPass / http://localhost:3000/
+ProxyPassReverse / http://localhost:3000/
+RequestHeader set X-Forwarded-Proto "https"
+RequestHeader set X-Forwarded-Port "443"
