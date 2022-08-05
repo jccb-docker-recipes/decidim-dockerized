@@ -1,0 +1,52 @@
+version: '3'
+services:
+  decidim:
+    image: ghcr.io/decidim/decidim:latest
+    # create and seed
+    #entrypoint: ['/bin/bash', '-c', 'bundle exec rake db:migrate:reset && bundle exec rake db:seed && bundle exec rails s -b 0.0.0.0']
+    # Only create container with empty database
+    entrypoint: ['/bin/bash', '-c', 'bundle exec rake db:create db:migrate && bundle exec rails s -b 0.0.0.0']
+    # The entrypoint override above wipes out the CMD
+    # on the Dockerfile-deploy, so we need to declare it
+    # again here (https://github.com/docker/compose/issues/3140)
+    command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
+    ports:
+      - 3000:3000
+    volumes:
+      - uploads:/code/public/uploads
+      #- logs:/code/log
+    environment:
+      - RAILS_ENV=development
+      - DATABASE_HOST=pg
+      - DATABASE_USERNAME=${COPP_DATABASE_USERNAME:-decidim_usr}
+      - DATABASE_PASSWORD=${COPP_DATABASE_PASSWORD:-PG11PG22PG33PG44PG55}
+      - DATABASE_NAME=decidim_db
+      - DECIDIM_AVAILABLE_LOCALES=${COPP_DECIDIM_AVAILABLE_LOCALES:-"de,en,es,fr,it,nl,pl,pt,ro"}
+      - DECIDIM_DEFAULT_LOCALE=${COPP_DECIDIM_DEFAULT_LOCALE:-de}
+      - SMTP_ADDRESS=SMTP_ADDRESS_VALUE
+      - SMTP_DOMAIN=SMTP_DOMAIN_VALUE
+      - SMTP_PASSWORD=SMTP_PASSWORD_VALUE
+      - SMTP_PORT=SMTP_PORT_VALUE
+      - SMTP_USERNAME=SMTP_USERNAME_VALUE
+      #- VIRTUAL_HOST=VIRTUAL_HOST_VALUE
+    links:
+      - pg
+      - redis
+  pg:
+    image: postgres
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+
+      - POSTGRES_USER=${COPP_DATABASE_USERNAME:-decidim_usr}
+      - POSTGRES_DB=decidim_db
+      - POSTGRES_PASSWORD=${COPP_DATABASE_PASSWORD:-PG11PG22PG33PG44PG55}
+  redis:
+    image: redis
+    volumes:
+      - redis-data:/data
+volumes:
+  uploads:
+  #logs:
+  pg-data: {}
+  redis-data: {}
